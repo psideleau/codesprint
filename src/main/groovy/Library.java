@@ -7,108 +7,124 @@ import java.util.stream.*;
  */
 class Library {
 
-    public static List<long[]> powerSetSub(long[] values, int k) {
-        BigInteger startKB = BigInteger.ONE.shiftLeft(k).subtract(BigInteger.ONE);
+    Map<BigInteger, BigInteger> value = new HashMap<>();
 
-        BigInteger x = startKB;
-        System.out.println(startKB);
-        BigInteger kFound = BigInteger.ZERO;
-        BigInteger maxK = (factorial(values.length).divide(factorial(k).multiply(factorial(values.length - k))));
+    public static List<Long> powerSetSub(long[] values, int k) {
+        List<Long> valuesList = Arrays.stream(values).boxed().collect(Collectors.toList());
 
-        List<long[]> powersSets = new ArrayList<>(10_000);
+        for (int j = 63; j >= 0; j--) {
+            List<Long> valuesWithKBitSet = new ArrayList<>();
 
-        BigInteger[] powerSetBits = new BigInteger[values.length];
-        for (int i = 0 ; i < values.length; i++) {
-            powerSetBits[i] = BigInteger.ONE.shiftLeft(i);
-        }
-
-       // System.out.println(maxK);
-        while (kFound.compareTo(maxK) != 0) {
-            long[] sets = new long[k];
-            int kIdx = 0;
-            for (int j = 0; j < values.length; j++) {
-                if (powerSetBits[j].compareTo(x) > 0) {
-                    break;
-                }
-                if (x.and(powerSetBits[j]).compareTo(BigInteger.ZERO) > 0)  {
-                    sets[kIdx] = values[j];
-                    kIdx++;
+            for (int i = 0; i < valuesList.size(); i++) {
+                if ((valuesList.get(i) & (1L << (long) j)) > 0) {
+                    valuesWithKBitSet.add(valuesList.get(i));
                 }
             }
 
-           kFound = kFound.add(BigInteger.ONE);
-//            BigInteger y = x.and(x.negate());
-//            BigInteger c = x.add(y);
-//            x = (x.xor(c)).shiftRight(2).divide(y).or(c);
-
-//            unsigned int t = (v | (v - 1)) + 1;
-          // w = t | ((((t & -t) / (v & -v)) >> 1) - 1);
-
-            BigInteger t = x.or(x.subtract(BigInteger.ONE)).add(BigInteger.ONE);
-            x = t.or(t.and(t.negate()).divide(x.and(x.negate())).shiftRight(1).subtract(BigInteger.ONE));
-
-            powersSets.add(sets);
+            if (valuesWithKBitSet.size() >= k) {
+                valuesList = valuesWithKBitSet;
+            }
         }
 
-//        Set<List<Long>> powersSets = new HashSet<>(100_000);
-//
-//        BigInteger max = new BigInteger("2").pow(values.length);
-//
-//        BigInteger kFound = BigInteger.ZERO;
-//        BigInteger maxK = (factorial(values.length).divide(factorial(k).multiply(factorial(values.length - k))));
-//        System.out.println(maxK);
-//        for (BigInteger i = BigInteger.ZERO; i.compareTo(max) < 0; i = i.add(BigInteger.ONE)) {
-//            List<Long> sets = new ArrayList<>();
-//            for (int j = 0; j < values.length; j++) {
-//                BigInteger shiftJ = BigInteger.ONE.shiftLeft(j);
-//                if (i.and(shiftJ).compareTo(BigInteger.ZERO) > 0)  {
-//                    sets.add(values[j]);
-//                }
-//            }
-//
-//            if (sets.size() == k) {
-//                kFound = kFound.add(BigInteger.ONE);
-//                powersSets.add(sets);
-//
-//                if (kFound == maxK) {
-//                    return new ArrayList<>(powersSets);
-//                }
-//            }
+        return valuesList;
+    }
+
+    static long convert (BigInteger value, BigInteger base) {
+
+        if (value.divide(base).equals(BigInteger.ZERO)) {
+            return value.longValue();
+        }
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        while (!value.equals(BigInteger.ZERO)) {
+            BigInteger[] values = value.divideAndRemainder(base);
+            value = values[0];
+            BigInteger digit = values[1];
+            stringBuilder.append(digit.toString());
+        }
+
+        return Long.parseLong(stringBuilder.reverse().toString());
+    }
+
+    public static BigInteger factorial(int k) {
+//        double ln = 0;
+//        for (int i = 2; i<= k; i++) {
+//            ln+= Math.log(i);
 //        }
+//
+//        return BigInteger.valueOf((long) ln);
+//
+     //   Euler's inverse modular arithmetic.
+//        BigInteger factorial = BigInteger.ONE;
+//        for (int i = 1; i<= k; i++) {
+//            factorial = factorial.multiply(BigInteger.valueOf(i));
+//        }
+//
+//        return factorial;
 
-        return powersSets;
+        return split(BigInteger.valueOf(k), BigInteger.ZERO);
     }
 
-    public static BigInteger factorial(long n) {
-        BigInteger result = BigInteger.ONE;
-        for (long i = 1; i <= n; i++) {
-            result = result.multiply(BigInteger.valueOf(i));
+    public static BigInteger split(BigInteger a, BigInteger b) {
+        BigInteger d = a.subtract(b);
+
+        if (d.compareTo(BigInteger.ZERO) < 0) {
+            return BigInteger.ZERO;
         }
-        return result;
+        else if (d.equals(BigInteger.ZERO)) {
+            return BigInteger.ONE;
+        }
+        else if (d.equals(BigInteger.ONE)) {
+            return a;
+        }
+        else if (d.equals(BigInteger.valueOf(2))) {
+            return a.multiply(a.subtract(BigInteger.ONE));
+        }
+        else if (d.equals(BigInteger.valueOf(3))) {
+            return a.multiply(a.subtract(BigInteger.ONE)).multiply(a.subtract(BigInteger.valueOf(2)));
+        }
+        else {
+            BigInteger m = a.add(b).divide(BigInteger.valueOf(2));
+            return split(a, m).multiply(split(m, b));
+        }
     }
+
 
     public static long[] powerSetWithMaxValue2(long[] values, int sequenceLength) {
-        List<long[]> powerSets = powerSetSub(values, sequenceLength);
-
-        long max = 0;
-        long maxCount = 0;
-
-        for (int i = 0; i < powerSets.size(); i++) {
-            long bitwiseAndSum = Arrays.stream(powerSets.get(i))
-                    .reduce(Long.MAX_VALUE, (x, y) -> x & y);
-
-            if (bitwiseAndSum > max) {
-                max = bitwiseAndSum;
-                maxCount = 1;
-            }
-            else if (bitwiseAndSum == max) {
-                maxCount++;
-            }
+        List<Long> maximalK = powerSetSub(values, sequenceLength);
+        long bitwiseAndSum = maximalK.get(0);
+        for(int i=1; i<sequenceLength; i++)
+        {
+            bitwiseAndSum = (bitwiseAndSum & maximalK.get(i));
         }
 
-        long modulus =  maxCount % (1000000007L);
 
-        return new long[] {max, modulus};
+        BigInteger nFactorial = factorial(maximalK.size());
+        BigInteger kFactorial = factorial(sequenceLength);
+
+        BigInteger divisor = kFactorial.multiply(
+                              factorial(maximalK.size() -sequenceLength));
+        BigInteger divide = nFactorial.divide(divisor);
+
+        BigInteger maxCount = (maximalK.size() == sequenceLength) ? BigInteger.ONE : divide;
+
+
+        //List<Long> maximalK = powerSetSub(values, sequenceLength);
+       // long bitwiseAndSum = maximalK
+//                .stream()
+//                .reduce(Long.MAX_VALUE, (x, y) -> x & y);
+
+//        int n = maximalK.size();
+//        int kElements
+//
+//        long n = convert(BigInteger.valueOf((long) maximalK.size()), BigInteger.valueOf(1000000007L)));
+//        long k = (convert(BigInteger.valueOf((long) sequenceLength), BigInteger.valueOf(1000000007L)));
+
+
+        long modulus =  maxCount.mod(BigInteger.valueOf(1000000007L)).longValue();
+
+        return new long[] {bitwiseAndSum, modulus};
     }
 
 

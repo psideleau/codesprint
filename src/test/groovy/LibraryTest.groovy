@@ -21,6 +21,41 @@ class LibraryTest extends Specification {
         powerSets[7] == [1, 2, 3]
     }
 
+    def "should convert to base 5"() {
+        when:
+        long x = Library.convert(6124, 5)
+
+        then:
+        x == 143444
+    }
+
+
+    @Unroll
+    def testFactorial() {
+        when:
+        def value = Library.factorial(n)
+
+        then:
+        value == expected
+
+        where:
+        n      | expected
+//        0 |	1
+//        1 |	1
+//        2 |	2
+//        3 |	6
+        4 |	24
+        5 |	120
+        6 |	720
+        7 |	5040
+        8 |	40320
+        9 |	362880
+        10 |	3628800
+
+    }
+
+
+
 
     def "find power sets of size k"() {
         when:
@@ -38,24 +73,31 @@ class LibraryTest extends Specification {
     def "find subsequences with maximum value"() {
         when:
 
-        int[] results = Library.powerSetWithMaxValue2(input as long[], k)
+        long[] results = Library.powerSetWithMaxValue2(input as long[], k)
 
         then:
         results[0] == max
         results[1] == maxModulo10To9thPowerPlus7
 
+        //281474976710656
+       //155930821
         where:
         input           | k  | max   | maxModulo10To9thPowerPlus7
-//        [6, 3, 7, 4]    | 3  | 4     | 1
-//        [1, 7, 4, 3]    | 1  | 7     | 1
-//        [6, 3, 7, 4]    | 4  | 0    | 1
-//        [3, 5, 6]       | 2  | 4     | 1
-//        [21, 19, 22, 20] | 2  | 20   | 3
-//        [9, 15, 27, 14]  | 3  | 10   | 1
-//        [3, 7, 16, 32]    | 2  |  3    | 1
-//        [10, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] | 3 | 3 | 1
-         new IntRange(1, 100).step(1)  |75 | 2 | 3
-       // [1, 2, 4, 4, 7]   | 3 | 4 | 1
+        [6, 3, 7, 4]    | 3  | 4     | 1
+        [29, 15, 9, 31] | 3  | 13    | 1
+        [1, 7, 4, 3]    | 1  | 7     | 1
+        [6, 3, 7, 4]    | 4  | 0    | 1
+        [3, 5, 6]       | 2  | 4     | 1
+        [21, 19, 22, 20] | 2  | 20   | 3
+        [9, 15, 27, 14]  | 3  | 10   | 1
+        [3, 7, 16, 32]    | 2  |  3    | 1
+         getInput()  | 24568 | 281474976710656L | 155930821
+        [1, 2, 4, 4, 7]   | 3 | 4 | 1
+    }
+
+
+    static long[] getInput() {
+        Library.class.getResource('/TestExample.txt').readLines().collect({Long.parseLong(it)})
     }
 
     @Unroll
